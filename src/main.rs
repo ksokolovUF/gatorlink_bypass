@@ -1,5 +1,5 @@
+use anyhow::{Context, Result, bail};
 use std::{fs, process::Command, time::Duration};
-use thirtyfour::error::WebDriverResult;
 use thirtyfour::extensions::query::ElementQueryable;
 use thirtyfour::{By, DesiredCapabilities, Key, WebDriver};
 use tokio::time::sleep;
@@ -15,14 +15,21 @@ impl Drop for ChildGuard {
 }
 
 #[tokio::main]
-async fn main() -> WebDriverResult<()> {
+async fn main() -> Result<()> {
     // read secrets
+    let codes = fs::read_to_string(".secrets/codes.txt")
+        .context("could not read .secrets/codes.txt")?
+        .trim()
+        .to_string();
+    if codes.is_empty() {
+        bail!("codes.txt is empty");
+    }
     let username = fs::read_to_string(".secrets/username.txt")
-        .expect("could not read username.txt")
+        .context("could not read .secrets/username.txt")?
         .trim()
         .to_string();
     let password = fs::read_to_string(".secrets/password.txt")
-        .expect("could not read password.txt")
+        .context("could not read .secrets/password.txt")?
         .trim()
         .to_string();
 
@@ -32,11 +39,11 @@ async fn main() -> WebDriverResult<()> {
         .unwrap_or_else(|| "geckodriver".into());
 
     let _gecko = ChildGuard(
-        Command::new(geckodriver)
+        Command::new(&geckodriver)
             .arg("--port")
             .arg(PORT.to_string())
             .spawn()
-            .expect("failed to start geckodriver"),
+            .with_context(|| format!("failed to start geckodriver: {geckodriver}"))?,
     );
 
     // setup webdriver
@@ -56,12 +63,12 @@ async fn main() -> WebDriverResult<()> {
             Err(_) => sleep(Duration::from_millis(150)).await,
         }
     }
-    let driver = driver.expect("could not connect to geckodriver");
+    let driver = driver.context("could not connect to geckodriver")?;
     driver
         .set_implicit_wait_timeout(Duration::from_secs(5))
         .await?;
 
-    let result: WebDriverResult<()> = async {
+    let result: Result<()> = async {
         driver.goto("https://account.it.ufl.edu/").await?;
         let button = driver
             .query(By::Css("a[href='/glam/passcodes']"))

@@ -25,8 +25,13 @@ Install [geckodriver](https://github.com/mozilla/geckodriver/releases).
 cd gatorlink_bypass
 mkdir -p .secrets
 chmod 700 .secrets
-touch .secrets/{password.txt,username.txt,codes.txt}
+touch .secrets/{username.txt,password.txt,codes.txt}
 chmod 600 .secrets/*
+```
+
+Put your username, password, and codes into the corresponding files.
+
+```bash
 cargo build --release
 mkdir -p ~/bin
 cp target/release/gatorlink_bypass ~/bin

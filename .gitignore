@@ -1,1 +1,6 @@
-.secret/
+.secrets/
+
+
+# Added by cargo
+
+/target

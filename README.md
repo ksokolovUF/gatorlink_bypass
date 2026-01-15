@@ -20,6 +20,6 @@ Make sure to bring your State ID or driver's license.
 cd gatorlink_bypass
 mkdir -p .secrets
 chmod 700 .secrets
-touch .secrets/{password.txt,email.txt,codes.txt}
+touch .secrets/{password.txt,username.txt,codes.txt}
 chmod 600 .secrets/*
 ```

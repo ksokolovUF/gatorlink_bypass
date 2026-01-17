@@ -1,13 +1,16 @@
 # GatorLink Bypass Codes
 
-The 2FA app UF makes you to use is proprietary malware, and the phone call
-authentication is very inconvenient.
-UF simply refuses to adopt standard TOTP based 2FA.
-That's where the bypass codes come in: you get 5 singe-use codes that replace 2FA.
-Every time you generate 5 more any unused codes become invalid, so you can't just
+The 2FA app UF makes you use is proprietary malware, and the alternative phone call
+authentication is very inconvenient (I usually don't carry my phone with me).
+UF simply refuses to adopt standard TOTP based 2FA that works on any device.
+However, UF provides a silly bypass codes system for people with phone issues:
+you get 5 singe-use codes that replace 2FA.
+Every time you generate 5 more, any unused codes become invalid, so you can't just
 stock up on them.
 Since GatorLink really likes to log you out multiple times a day, it becomes very
-inconvenient to manage the codes.
+inconvenient to manage the codes, especially when you need them for HiPerGator work
+-- they run out very fast.
+
 This program helps you manage the codes regenerating them for you, making sure they
 never run out.
 

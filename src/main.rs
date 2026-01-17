@@ -15,12 +15,16 @@ impl Drop for ChildGuard {
     }
 }
 
-pub fn copy_wayland(text: &str) {
-    std::process::Command::new("wl-copy")
+pub fn copy_wayland(text: &str) -> Result<()> {
+    let status = std::process::Command::new("wl-copy")
         .arg("--") // stop option parsing (so text starting with '-' won’t be treated as a flag)
         .arg(text) // wl-copy accepts text as args
         .status()
-        .unwrap();
+        .context("failed to run wl-copy")?;
+    if !status.success() {
+        bail!("wl-copy exited with status: {status}");
+    }
+    Ok(())
 }
 
 fn pop_last_line(path: &str) -> Result<String> {
@@ -49,7 +53,6 @@ async fn renew_codes() -> Result<()> {
     let geckodriver = std::env::args()
         .nth(1)
         .context("missing geckodriver path argument (pass it as argv[1])")?;
-
     let _gecko = ChildGuard(
         Command::new(&geckodriver)
             .arg("--port")
@@ -77,7 +80,7 @@ async fn renew_codes() -> Result<()> {
     }
     let driver = driver.context("could not connect to geckodriver")?;
     driver
-        .set_implicit_wait_timeout(Duration::from_secs(10))
+        .set_implicit_wait_timeout(Duration::from_secs(15))
         .await?;
 
     let result: Result<()> = async {
@@ -96,7 +99,8 @@ async fn renew_codes() -> Result<()> {
         p_form.send_keys(&password).await?;
         p_form.send_keys(Key::Enter).await?;
         driver
-            .find(By::XPath("//button[normalize-space(.)='Other options']"))
+            .query(By::Css(".other-options-link button"))
+            .first()
             .await?
             .click()
             .await?;
@@ -111,7 +115,6 @@ async fn renew_codes() -> Result<()> {
             .await?;
         let code_form = driver.query(By::Id("passcode-input")).first().await?;
         let code = pop_last_line(".secrets/codes.txt")?;
-
         code_form.send_keys(code).await?;
         code_form.send_keys(Key::Enter).await?;
 
@@ -120,14 +123,13 @@ async fn renew_codes() -> Result<()> {
             .await?
             .click()
             .await?;
-
         driver
             .query(By::Id("gen_bypass_codes_btn"))
-            .wait(Duration::from_secs(10), Duration::from_millis(200))
             .first()
             .await?
             .click()
             .await?;
+
         // wait until the codes div has non-empty text
         let text = timeout(Duration::from_secs(30), async {
             loop {
@@ -136,11 +138,9 @@ async fn renew_codes() -> Result<()> {
                     .await?
                     .text()
                     .await?;
-
                 if !t.trim().is_empty() {
                     return Ok::<_, anyhow::Error>(t);
                 }
-
                 sleep(Duration::from_millis(150)).await;
             }
         })
@@ -154,6 +154,7 @@ async fn renew_codes() -> Result<()> {
             .collect::<Vec<_>>()
             .join("\n");
         std::fs::write(".secrets/codes.txt", new_codes)?;
+
         Ok(())
     }
     .await;
@@ -176,6 +177,6 @@ async fn main() -> Result<()> {
         let _ = renew_codes().await?;
     }
     let code = pop_last_line(".secrets/codes.txt")?;
-    copy_wayland(&code);
+    let _ = copy_wayland(&code);
     Ok(())
 }

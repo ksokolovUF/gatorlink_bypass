@@ -42,3 +42,6 @@ mkdir -p ~/bin
 cp target/release/gatorlink_bypass ~/bin
 ~/bin/gatorlink_bypass ~/.cache/selenium/geckodriver/linux-arm64/0.36.0/geckodriver
 ```
+
+You'll get a valid code in your clipboard.
+If only one code remains, it's used to regenerate 5 more codes.

@@ -8,10 +8,19 @@ const PORT: u16 = 4445;
 
 struct ChildGuard(std::process::Child);
 impl Drop for ChildGuard {
+    // destructor kills the process
     fn drop(&mut self) {
         let _ = self.0.kill();
         let _ = self.0.wait();
     }
+}
+
+pub fn copy_wayland(text: &str) {
+    std::process::Command::new("wl-copy")
+        .arg("--") // stop option parsing (so text starting with '-' won’t be treated as a flag)
+        .arg(text) // wl-copy accepts text as args
+        .status()
+        .unwrap();
 }
 
 fn pop_last_line(path: &str) -> Result<String> {
@@ -22,19 +31,12 @@ fn pop_last_line(path: &str) -> Result<String> {
         .map(str::to_string)
         .ok_or_else(|| anyhow!("empty"))?;
     fs::write(path, v.join("\n") + "\n")?;
+    copy_wayland(&last);
     Ok(last)
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+async fn renew_codes() -> Result<()> {
     // read secrets
-    let codes = fs::read_to_string(".secrets/codes.txt")
-        .context("could not read .secrets/codes.txt")?
-        .trim()
-        .to_string();
-    if codes.is_empty() {
-        bail!("codes.txt is empty");
-    }
     let username = fs::read_to_string(".secrets/username.txt")
         .context("could not read .secrets/username.txt")?
         .trim()
@@ -127,7 +129,7 @@ async fn main() -> Result<()> {
             .await?
             .click()
             .await?;
-        // Wait until the codes div has non-empty text.
+        // wait until the codes div has non-empty text
         let text = timeout(Duration::from_secs(30), async {
             loop {
                 let t = driver
@@ -160,4 +162,21 @@ async fn main() -> Result<()> {
     // try to quit even if something failed
     let _ = driver.quit().await;
     result
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let codes = fs::read_to_string(".secrets/codes.txt")
+        .context("could not read .secrets/codes.txt")?
+        .trim()
+        .to_string();
+    let code_count = codes.lines().filter(|l| !l.trim().is_empty()).count();
+    if codes.is_empty() {
+        bail!("codes.txt is empty");
+    } else if code_count == 1 {
+        let _ = renew_codes().await?;
+    } else {
+        pop_last_line(".secrets/codes.txt")?;
+    }
+    Ok(())
 }

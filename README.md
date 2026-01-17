@@ -1,6 +1,6 @@
 # GatorLink Bypass Codes
 
-The 2FA app they want you to use is proprietary malware, and the phone call
+The 2FA app UF makes you to use is proprietary malware, and the phone call
 authentication is very inconvenient.
 UF simply refuses to adopt standard TOTP based 2FA.
 That's where the bypass codes come in: you get 5 singe-use codes that replace 2FA.

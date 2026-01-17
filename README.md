@@ -21,6 +21,8 @@ Install [geckodriver](https://github.com/mozilla/geckodriver/releases).
 > **_NOTE:_**  you can use `selenium-manager` to get geckodriver:
 `sudo dnf install selenium-manager` and then `selenium-manager --browser firefox`
 
+Also you need `wl-clipboard` to use with Wayland: `sudo dnf install wl-clipboard`
+
 ```bash
 cd gatorlink_bypass
 mkdir -p .secrets

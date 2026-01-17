@@ -31,7 +31,6 @@ fn pop_last_line(path: &str) -> Result<String> {
         .map(str::to_string)
         .ok_or_else(|| anyhow!("empty"))?;
     fs::write(path, v.join("\n") + "\n")?;
-    copy_wayland(&last);
     Ok(last)
 }
 
@@ -175,8 +174,8 @@ async fn main() -> Result<()> {
         bail!("codes.txt is empty");
     } else if code_count == 1 {
         let _ = renew_codes().await?;
-    } else {
-        pop_last_line(".secrets/codes.txt")?;
     }
+    let code = pop_last_line(".secrets/codes.txt")?;
+    copy_wayland(&code);
     Ok(())
 }
